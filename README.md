@@ -14,7 +14,7 @@ It has 3 states:
 
 # Installation instructions
 - Install the required dependencies (pip install -r requirements.txt)
-- Use the grinder.py file to use the program
+- Use the Run Autopilot.bat file to use the program
 
 # Goals
 - Create a pathing system for AutoRoam
