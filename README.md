@@ -13,7 +13,7 @@ It has 3 states:
 2) AutoFight: This module picks a random fighting option when they show up
 
 # Installation instructions
-- Install the required dependencies
+- Install the required dependencies (pip install -r requirements.txt)
 - Use the grinder.py file to use the program
 
 # Goals
