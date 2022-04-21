@@ -55,7 +55,7 @@ if functions.checkFirstTimeUse():
         if fight:
             modules.AutoFight(parameters, currentStatus)
         if roam:
-            modules.AutoRoam(currentStatus, key, previousKey)
+            previousKey = modules.AutoRoam(currentStatus, previousKey)
 
         # Increment the total victories if the user won
         if currentStatus == 'Battle End Screen' and previousStatus != currentStatus:

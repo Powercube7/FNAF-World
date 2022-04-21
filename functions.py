@@ -149,7 +149,9 @@ class Modules:
             optionPicked = random.choice(indexes)
             pyautogui.click(getCenter(optionPicked))
 
-    def AutoRoam(status, key, previous):
+    def AutoRoam(status, previous):
+        controls = ['w', 'a', 's', 'd']
+
         # Add function to avoid repeating code blocks
         def press(key, delay = None):
             pyautogui.keyDown(key)
@@ -157,16 +159,20 @@ class Modules:
                 time.sleep(delay)
             pyautogui.keyUp(key)
 
-        # If the user is in the overworld, update the key value with one of the WASD keys randomly to move around for a random duration of maximum 1 second
+        # If the user is in the overworld, update the key value with one of the WASD keys randomly to move around for a random duration of maximum 2 seconds
         if status == 'Overworld':
-            key = random.choice(['w', 'a', 's', 'd'])
-            press(key, random.random())
+            key = random.choice(controls)
+            press(key, random.uniform(0, 2))
             previous = key
 
-        # If the program doesn't know the status, press the previous key for 0.5 seconds
-        elif status == 'Clueless':
-            press(previous, 0.5)
+        # If the program doesn't know the status, press the reverse key to go back to the previous state
+        elif status == 'Clueless' and previous != None:
+            press(controls[(controls.index(previous) + 2)%len(controls)], 0.5)
+        elif status == 'Clueless' and previous == None:
+            press(random.choice(controls), 0.5)
                 
         # If the user enters a shop, click the DONE button
         elif status == 'Shopping':
             pyautogui.click(1695, 1000)
+
+        return previous
