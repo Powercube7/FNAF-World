@@ -19,7 +19,7 @@ It has 3 states:
 # Goals
 - Create a pathing system for AutoRoam
 - Create a system that picks the options that deal the most damage in AutoFight
-- Add the ability to go to certain areas in the game
+- Add the ability to go automatically to certain areas in the game
 - Make script easier to use
 - Add more ending statistics (e.g. how many new characters, etc.)
 - Make the script more efficient
