@@ -34,7 +34,7 @@ if functions.checkFirstTimeUse():
 
     # Load AI Model
     if fight or roam:
-        model = torch.hub.load("ultralytics/yolov5", "custom", "FNAF.pt")
+        model = torch.hub.load("ultralytics/yolov5", "custom", "./assets/FNAF.pt")
         model.conf = 0.7
         print("\nAI Model loaded successfully")
         yoloActions = functions.InputActions(model)
@@ -50,6 +50,12 @@ if functions.checkFirstTimeUse():
         frame = grabScreenshot()
         resultImage, parameters = yoloActions.runInference(frame, True, True)
         currentStatus = yoloActions.getCurrentStatus(parameters)
+
+        # If the E key is pressed, check if the switch button is in the image
+        if keyboard.is_pressed('e'):
+            switchButton = pyautogui.locate("./assets/switch.png", frame, grayscale = True, confidence=0.8)
+            if switchButton:
+                pyautogui.click(pyautogui.center(switchButton))
 
         # Run actions based on the enabled modules
         if fight:
