@@ -53,13 +53,13 @@ def isGameOpened():
         return False
 def enableModules():
     # Ask the user if they want to enable the fighting module and the roaming module
-    enableFighting = pyautogui.confirm(title="Enable Module", text="Do you want to enable the fighting module?\nNOTE: Enabling the fighting module will cause the program to automatically fight enemies.", buttons=["Yes", "No"])
-    enableRoaming = pyautogui.confirm(title="Enable Module", text="Do you want to enable the roaming module?\nNOTE: Enabling the roaming module will cause the program to automatically roam around the map.\nWARNING: Having a text prompt open while the module is running will cause the inputs to be sent to the prompt.", buttons=["Yes", "No"])
+    enableFighting = pyautogui.confirm(title="Enable Module", text="Do you want to enable the fighting module?", buttons=["Yes", "No"])
+    enableRoaming = pyautogui.confirm(title="Enable Module", text="Do you want to enable the roaming module?\nWARNING: Having a text prompt open while the module is running will cause the inputs to be sent to the prompt.", buttons=["Yes", "No"])
 
     fight = False
     roam = False
 
-    # If the user wants to enable the module, enable it
+    # Enable modules if prompted by the user
     if enableFighting == "Yes":
         fight = True
     if enableRoaming == "Yes":
