@@ -10,20 +10,23 @@ def checkFirstTimeUse():
         file = open("user.data", "w+")
         pyautogui.alert(title="Alert", text="User data for first time use not found.\nPlease complete the following prompt to use this program")
         exe_path = pyautogui.prompt(title="Setup", text='Please insert the location of your FNAF World EXE in the field below.\n\nSteps to get the location:\n1. CTRL+Shift+Right-click your EXE file\n2. Click the "Copy as path" option and paste the output here\n\nWARNING: Inserting the wrong data will lead the program into an unusable state. To fix it delete user.data and redo this process')
-        
-        exe_path = exe_path[1:-1]
-        exe_path = exe_path.split("\\")
+        if exe_path != None:
+            exe_path = exe_path[1:-1]
+            exe_path = exe_path.split("\\")
 
-        file.write("exePath=")
+            file.write("exePath=")
 
-        editedPath = ""
-        for directory in exe_path:
-            if ' ' in directory:
-                directory = f'"{directory}"'
-            editedPath = editedPath + f"{directory}\\"
-        file.write(editedPath[:-1])
-        file.write(f"\nexeName={exe_path[-1]}")
-        file.close()
+            editedPath = ""
+            for directory in exe_path:
+                if ' ' in directory:
+                    directory = f'"{directory}"'
+                editedPath = editedPath + f"{directory}\\"
+            file.write(editedPath[:-1])
+            file.write(f"\nexeName={exe_path[-1]}")
+            file.close()
+        else:
+            file.close()
+            os.remove("user.data")
 
         return False
     else:
