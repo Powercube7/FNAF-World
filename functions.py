@@ -60,9 +60,9 @@ def enableModules():
     roam = False
 
     # If the user wants to enable the module, enable it
-    if enableFighting:
+    if enableFighting == "Yes":
         fight = True
-    if enableRoaming:
+    if enableRoaming == "Yes":
         roam = True
 
     return fight, roam
