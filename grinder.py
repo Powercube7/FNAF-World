@@ -64,4 +64,4 @@ if functions.checkFirstTimeUse():
 
     pyautogui.alert(title="Module ended", text= f"Total battles won: {totalVictories}")
 else:
-    pyautogui.alert(title="Alert", text="Please restart this program in order to use the updated user data")
+    pyautogui.alert(title="Setup complete", text="Game EXE found.\nPlease restart this program in order to use the updated user data")

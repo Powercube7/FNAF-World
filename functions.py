@@ -7,30 +7,39 @@ import os
 
 def checkFirstTimeUse():
     if not os.path.exists("user.data"):
-        file = open("user.data", "w+")
         pyautogui.alert(title="Alert", text="User data for first time use not found.\nPlease complete the following prompt to use this program")
-        exe_path = pyautogui.prompt(title="Setup", text='Please insert the location of your FNAF World EXE in the field below.\n\nSteps to get the location:\n1. CTRL+Shift+Right-click your EXE file\n2. Click the "Copy as path" option and paste the output here\n\nWARNING: Inserting the wrong data will lead the program into an unusable state. To fix it delete user.data and redo this process')
-        if exe_path != None:
-            '''
-            1. Delete the first and last character of the string
-            2. Split the string by the "\\" character
-            3. Save the last element of the list in the file under the name "exeName"
-            4. If an element has multiple words, put quotation marks around it
-            5. Join the string back together with the "\\" character and save it under the name "exePath"
-            '''
-            exe_path = exe_path[1:-1]
-            exe_path = exe_path.split("\\")
-            exe_name = exe_path[-1]
-            for i in range(len(exe_path)):
-                if " " in exe_path[i]:
-                    exe_path[i] = f'"{exe_path[i]}"'
-            exe_path = "\\".join(exe_path)
-            file.write(f"exePath={exe_path}\nexeName={exe_name}")
-            file.close()
-        else:
-            file.close()
-            os.remove("user.data")
+        exe_name = pyautogui.prompt(title="Setup", text='Please insert the name of the game exe file (without the .exe extension)')
+        
+        if exe_name == None:
+            pyautogui.alert(title="Alert", text="Operation aborted")
+            exit()
 
+        else:
+            def find(name, path):
+                for root, dirs, files in os.walk(path):
+                    if name in files:
+                        return os.path.join(root, name)
+            print("Searching the C: drive for the game exe file...")
+            location =  find(exe_name + ".exe", "C:\\")
+            if location == None:
+                print("Game exe file not found.")
+                pyautogui.alert(title="Alert", text="Game not found. Please restart the program and try again")
+                exit()
+            else:
+                '''
+                1. Split the location into a list with the \\ as a delimiter
+                2. If an element has multiple words, surround it with quotation marks
+                3. Join the list back together with a backslash
+                '''
+                print("Game exe file found.")
+                location = location.split("\\")
+                for i in range(len(location)):
+                    if " " in location[i]:
+                        location[i] = '"' + location[i] + '"'
+                location = "\\".join(location)
+
+                f = open("user.data", "w+")
+                f.write(f"exePath={location}\nexeName={exe_name}.exe")
         return False
     else:
         return True
