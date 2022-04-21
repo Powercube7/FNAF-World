@@ -11,18 +11,21 @@ def checkFirstTimeUse():
         pyautogui.alert(title="Alert", text="User data for first time use not found.\nPlease complete the following prompt to use this program")
         exe_path = pyautogui.prompt(title="Setup", text='Please insert the location of your FNAF World EXE in the field below.\n\nSteps to get the location:\n1. CTRL+Shift+Right-click your EXE file\n2. Click the "Copy as path" option and paste the output here\n\nWARNING: Inserting the wrong data will lead the program into an unusable state. To fix it delete user.data and redo this process')
         if exe_path != None:
+            '''
+            1. Delete the first and last character of the string
+            2. Split the string by the "\\" character
+            3. Save the last element of the list in the file under the name "exeName"
+            4. If an element has multiple words, put quotation marks around it
+            5. Join the string back together with the "\\" character and save it under the name "exePath"
+            '''
             exe_path = exe_path[1:-1]
             exe_path = exe_path.split("\\")
-
-            file.write("exePath=")
-
-            editedPath = ""
-            for directory in exe_path:
-                if ' ' in directory:
-                    directory = f'"{directory}"'
-                editedPath = editedPath + f"{directory}\\"
-            file.write(editedPath[:-1])
-            file.write(f"\nexeName={exe_path[-1]}")
+            exe_name = exe_path[-1]
+            for i in range(len(exe_path)):
+                if " " in exe_path[i]:
+                    exe_path[i] = f'"{exe_path[i]}"'
+            exe_path = "\\".join(exe_path)
+            file.write(f"exePath={exe_path}\nexeName={exe_name}")
             file.close()
         else:
             file.close()
@@ -33,35 +36,34 @@ def checkFirstTimeUse():
         return True
 
 def isGameOpened():
-    processList = psutil.process_iter(attrs=['pid', 'name'])
+    # Get list of current processes using psutil
+    processes = [process.name() for process in psutil.process_iter()]
 
-    gameName = open("user.data", "r")
-    gameName = gameName.read()
-    gameName = gameName.split("\n")[-1]
+    # Get the name of the game from the user data file
+    f = open("user.data", "r")
+    gameName = f.read()
+    gameName = gameName.split("\n")[1]
     gameName = gameName.replace("exeName=", "")
+    f.close()
 
-    gameOpen = False
-
-    for process in processList:
-        if process.name() == gameName:
-            gameOpen = True
-            break
-    
-    return gameOpen
-
+    # Check if the game is opened
+    if gameName in processes:
+        return True
+    else:
+        return False
 def enableModules():
-    enableFighting = pyautogui.confirm(text="Enable Fighting Module?", title="Module Prompt", buttons=["Yes", "No"])
-    enableRoaming = pyautogui.confirm(text="Enable Roaming Module?", title="Module Prompt", buttons=["Yes", "No"])
+    # Ask the user if they want to enable the fighting module and the roaming module
+    enableFighting = pyautogui.confirm(title="Enable Module", text="Do you want to enable the fighting module?\nNOTE: Enabling the fighting module will cause the program to automatically fight enemies.", buttons=["Yes", "No"])
+    enableRoaming = pyautogui.confirm(title="Enable Module", text="Do you want to enable the roaming module?\nNOTE: Enabling the roaming module will cause the program to automatically roam around the map.\nWARNING: Having a text prompt open while the module is running will cause the inputs to be sent to the prompt.", buttons=["Yes", "No"])
 
-    if enableFighting.upper() == "YES":
+    fight = False
+    roam = False
+
+    # If the user wants to enable the module, enable it
+    if enableFighting:
         fight = True
-    else:
-        fight = False
-
-    if enableRoaming.upper() == "YES":
+    if enableRoaming:
         roam = True
-    else:
-        roam = False
 
     return fight, roam
 
@@ -71,12 +73,15 @@ class InputActions:
     
     def runInference(self, img, isBGR = False, returnParams = False):
         inferenceResults = None
+
+        # Make sure the image is in BGR format for better results
         if not isBGR:
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             inferenceResults = self.model(img)
         else:
             inferenceResults = self.model(img)
 
+        # Return the detection details if prompted by the user
         if returnParams:
             parameters = {
                 "ymax": list(inferenceResults.pandas().xyxy[0].ymax),
@@ -107,9 +112,11 @@ class InputActions:
                     status = statusOptions[i]
                     break
 
+        # Set status to Clueless to avoid errors
         if status == None:
             status = "Clueless"
 
+        # Add the status on an image if it's passed
         if len(addText) != 0:
             if status == 'Overworld' or status == 'Clueless':
                 cv2.putText(addText, f"Status: {status}", (35, 240), cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
@@ -140,23 +147,23 @@ class Modules:
             pyautogui.click(getCenter(optionPicked))
 
     def AutoRoam(status, key, previous):
+        # Add function to avoid repeating code blocks
         def press(key, delay = None):
             pyautogui.keyDown(key)
             if delay != None:
                 time.sleep(delay)
             pyautogui.keyUp(key)
 
+        # If the user is in the overworld, update the key value with one of the WASD keys randomly to move around for a random duration of maximum 1 second
         if status == 'Overworld':
+            key = random.choice(['w', 'a', 's', 'd'])
+            press(key, random.random())
             previous = key
-            while key == previous:
-                key = random.choice(['w', 'a', 's', 'd'])
-            press(key, 0.5)
+
+        # If the program doesn't know the status, press the previous key for 0.5 seconds
+        elif status == 'Clueless':
+            press(previous, 0.5)
                 
+        # If the user enters a shop, click the DONE button
         elif status == 'Shopping':
             pyautogui.click(1695, 1000)
-
-        elif status == 'Clueless':
-            previous = key
-            while key == previous:
-                key = random.choice(['w', 'a', 's', 'd'])
-            press(key)
