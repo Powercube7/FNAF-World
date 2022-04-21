@@ -102,21 +102,24 @@ class InputActions:
         statusOptions = ['Battle End Screen', 'In Battle', 'Overworld', 'Shopping']
         labels = ['Victory', 'Health', 'Overworld', 'Lolbit Shop']
 
+        # If nothing is found set the status to "Clueless"
         if parametersDict["name"] == []:
             status = "Clueless"
+        # Set the status to Picking Option only if the AI finds both the health of the characters and the fighting option in order to avoid fake positives
         elif "Health" in parametersDict["name"] and "Fighting Option" in parametersDict["name"]:
             status = "Picking Option"
         else:
+            # Iterate through the rest of the labels and check if any of them are in the name list. If so, set the status to the option corresponding to that label
             for i in range(0, len(labels)):
                 if labels[i] in parametersDict["name"]:
                     status = statusOptions[i]
                     break
 
-        # Set status to Clueless to avoid errors
+        # Set status to Clueless if it's None to avoid errors
         if status == None:
             status = "Clueless"
 
-        # Add the status on an image if it's passed
+        # Add the status on an image if the user supplies one
         if len(addText) != 0:
             if status == 'Overworld' or status == 'Clueless':
                 cv2.putText(addText, f"Status: {status}", (35, 240), cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
