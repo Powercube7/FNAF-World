@@ -1,10 +1,8 @@
-valid
-train
 videos
 tests.py
 extract.py
 training_functions.py
 __pycache__
-FNAF.yaml
+FNAF
 predict.py
 user.data

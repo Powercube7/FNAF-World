@@ -5,10 +5,10 @@ import functions
 import keyboard
 import torch
 
-key = None
 previousKey = None
 previousStatus = None
-totalVictories = 0
+victories = 0
+challengers = 0
 
 if functions.checkFirstTimeUse():
     print("User Data found. Starting program...")
@@ -65,9 +65,13 @@ if functions.checkFirstTimeUse():
 
         # Increment the total victories if the user won
         if currentStatus == 'Battle End Screen' and previousStatus != currentStatus:
-                totalVictories += 1
-        previousStatus = currentStatus
+            victories += 1
 
-    pyautogui.alert(title="Module ended", text= f"Total battles won: {totalVictories}")
+        # Increment the total challengers if the user encountered one
+        if currentStatus == 'Encountered Challenger' and previousStatus != currentStatus:
+            challengers += 1
+
+        previousStatus = currentStatus
+    pyautogui.alert(title="Module ended", text= f"Total battles won: {victories}\nTotal challengers encountered: {challengers}")
 else:
     pyautogui.alert(title="Setup complete", text="Game EXE found.\nPlease restart this program in order to use the updated user data")

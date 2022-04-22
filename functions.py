@@ -108,8 +108,8 @@ class InputActions:
     def getCurrentStatus(self, parametersDict, addText = []):
         status = None
 
-        statusOptions = ['Battle End Screen', 'In Battle', 'Overworld', 'Shopping']
-        labels = ['Victory', 'Health', 'Overworld', 'Lolbit Shop']
+        statusOptions = ['Overworld', 'Encountered Challenger', 'Battle End Screen', 'In Battle', 'Shopping']
+        labels = ['Overworld', 'New Challenger', 'Victory', 'Health', 'Lolbit Shop']
 
         # If nothing is found set the status to "Clueless"
         if parametersDict["name"] == []:
