@@ -11,7 +11,7 @@ def checkFirstTimeUse():
         exe_name = pyautogui.prompt(title="Setup", text='Please insert the name of the game exe file (without the .exe extension)')
         
         if exe_name == None:
-            pyautogui.alert(title="Alert", text="Operation aborted")
+            pyautogui.alert(title="Alert", text="Setup aborted")
             exit()
 
         else:
@@ -158,7 +158,7 @@ class Modules:
             optionPicked = random.choice(indexes)
             pyautogui.click(getCenter(optionPicked))
 
-    def AutoRoam(status, previous):
+    def AutoRoam(status, previous, image):
         controls = ['w', 'a', 's', 'd']
 
         # Add function to avoid repeating code blocks
@@ -168,10 +168,10 @@ class Modules:
                 time.sleep(delay)
             pyautogui.keyUp(key)
 
-        # If the user is in the overworld, update the key value with one of the WASD keys randomly to move around for a random duration of maximum 2 seconds
+        # If the user is in the overworld, update the key value with one of the WASD keys randomly to move around for a random duration of maximum 1.5 seconds
         if status == 'Overworld':
             key = random.choice(controls)
-            press(key, random.uniform(0, 2))
+            press(key, random.uniform(0, 1.5))
             previous = key
 
         # If the program doesn't know the status, press the reverse key to go back to the previous state
@@ -182,6 +182,8 @@ class Modules:
                 
         # If the user enters a shop, click the DONE button
         elif status == 'Shopping':
-            pyautogui.click(1695, 1000)
+            location = pyautogui.locate('./assets/done.png', image, grayscale = True, confidence = 0.8)
+            if location != None:
+                pyautogui.click(pyautogui.center(location))
 
         return previous

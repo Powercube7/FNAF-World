@@ -10,6 +10,9 @@ previousStatus = None
 victories = 0
 challengers = 0
 
+if not functions.checkFirstTimeUse():
+    pyautogui.alert(title="Setup complete", text="First time use setup completed. Enjoy the program!")
+
 if functions.checkFirstTimeUse():
     print("User Data found. Starting program...")
     if not functions.isGameOpened():
@@ -24,7 +27,7 @@ if functions.checkFirstTimeUse():
             os.system(f"start {gamePath}")
             print("Game opened successfully. Starting modules.")
         except:
-            print("Game could not be opened. Please make sure the game is installed and the path is correct.")
+            print("Game could not be opened. Please make sure the game is installed and the path is correct.\fIf the path isn't correct, delete user.data and restart the program.")
     else:
         print("Game already open. Starting modules.")
 
@@ -46,32 +49,32 @@ if functions.checkFirstTimeUse():
     print(f"Automatic Roaming Engaged: {roam}")
     while not keyboard.is_pressed('q'):
 
-        # Take a screenshot of the game and get the status using the AI's detections
-        frame = grabScreenshot()
-        resultImage, parameters = yoloActions.runInference(frame, True, True)
-        currentStatus = yoloActions.getCurrentStatus(parameters)
-
         # If the E key is pressed, check if the switch button is in the image
         if keyboard.is_pressed('e'):
-            switchButton = pyautogui.locate("./assets/switch.png", frame, grayscale = True, confidence=0.8)
+            switchButton = pyautogui.locate("./assets/switch.png", frame, grayscale = True, confidence=0.7)
+            print(switchButton)
             if switchButton:
                 pyautogui.click(pyautogui.center(switchButton))
 
-        # Run actions based on the enabled modules
-        if fight:
-            modules.AutoFight(parameters, currentStatus)
-        if roam:
-            previousKey = modules.AutoRoam(currentStatus, previousKey)
+        elif not keyboard.is_pressed('e'):
+            # Take a screenshot of the game and get the status using the AI's detections
+            frame = grabScreenshot()
+            resultImage, parameters = yoloActions.runInference(frame, True, True)
+            currentStatus = yoloActions.getCurrentStatus(parameters)
 
-        # Increment the total victories if the user won
-        if currentStatus == 'Battle End Screen' and previousStatus != currentStatus:
-            victories += 1
+            # Run actions based on the enabled modules
+            if fight:
+                modules.AutoFight(parameters, currentStatus)
+            if roam:
+                previousKey = modules.AutoRoam(currentStatus, previousKey, frame)
 
-        # Increment the total challengers if the user encountered one
-        if currentStatus == 'Encountered Challenger' and previousStatus != currentStatus:
-            challengers += 1
+            # Increment the total victories if the user won
+            if currentStatus == 'Battle End Screen' and previousStatus != currentStatus:
+                victories += 1
 
-        previousStatus = currentStatus
-    pyautogui.alert(title="Module ended", text= f"Total battles won: {victories}\nTotal challengers encountered: {challengers}")
-else:
-    pyautogui.alert(title="Setup complete", text="Game EXE found.\nPlease restart this program in order to use the updated user data")
+            # Increment the total challengers if the user encountered one
+            if currentStatus == 'Encountered Challenger' and previousStatus != currentStatus:
+                challengers += 1
+
+            previousStatus = currentStatus
+    pyautogui.alert(title="Program ended", text= f"Total battles won: {victories}\nTotal challengers encountered: {challengers}")
