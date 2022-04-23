@@ -52,7 +52,6 @@ if functions.checkFirstTimeUse():
         # If the E key is pressed, check if the switch button is in the image
         if keyboard.is_pressed('e'):
             switchButton = pyautogui.locate("./assets/switch.png", frame, grayscale = True, confidence=0.7)
-            print(switchButton)
             if switchButton:
                 pyautogui.click(pyautogui.center(switchButton))
 

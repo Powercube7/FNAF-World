@@ -21,7 +21,7 @@ It has 3 states:
 - Create a system that picks the options that deal the most damage in AutoFight
 - Add the ability to go automatically to certain areas in the game
 - Make script easier to use
-- Add more ending statistics (e.g. how many new characters, etc.)
+- Add more ending statistics (e.g. how many tokens earned, how much EXP earned, etc.)
 - Make the script more efficient
 - Make the program into an executable
 - Create a GUI
