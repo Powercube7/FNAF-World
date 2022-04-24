@@ -44,6 +44,13 @@ def checkFirstTimeUse():
     else:
         return True
 
+def getCenter(index, parameters):
+            x1, x2 = parameters["xmin"][index], parameters["xmax"][index]
+            y1, y2 = parameters["ymin"][index], parameters["ymax"][index]
+
+            center = (int((x2 + x1) / 2), int((y2 + y1) / 2))
+            return center
+
 def isGameOpened():
     # Get list of current processes using psutil
     processes = [process.name() for process in psutil.process_iter()]
@@ -143,22 +150,15 @@ class InputActions:
 class Modules:
 
     def AutoFight(parameters, status):
-        def getCenter(index):
-            x1, x2 = parameters["xmin"][index], parameters["xmax"][index]
-            y1, y2 = parameters["ymin"][index], parameters["ymax"][index]
-
-            center = (int((x2 + x1) / 2), int((y2 + y1) / 2))
-            return center
-
         if status == 'Picking Option':
             indexes = []
             for i in range(0, len(parameters["name"])):
                 if parameters["name"][i] == 'Fighting Option':
                     indexes.append(i)
             optionPicked = random.choice(indexes)
-            pyautogui.click(getCenter(optionPicked))
+            pyautogui.click(getCenter(optionPicked, parameters))
 
-    def AutoRoam(status, previous, image):
+    def AutoRoam(status, previous, parameters):
         controls = ['w', 'a', 's', 'd']
 
         # Add function to avoid repeating code blocks
@@ -182,8 +182,8 @@ class Modules:
                 
         # If the user enters a shop, click the DONE button
         elif status == 'Shopping':
-            location = pyautogui.locate('./assets/done.png', image, grayscale = True, confidence = 0.8)
-            if location != None:
-                pyautogui.click(pyautogui.center(location))
+            location = parameters["name"].index("Done Button")
+            if location != -1:
+                pyautogui.click(getCenter(location, parameters))
 
         return previous
