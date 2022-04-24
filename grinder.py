@@ -38,7 +38,7 @@ modules = functions.Modules
 # Load AI Model
 if fight or roam:
     print("Loading AI model...")
-    model = torch.hub.load("ultralytics/yolov5", "custom", "./assets/FNAF.pt", verbose = False, _verbose = False)
+    model = torch.hub.load("ultralytics/yolov5", "custom", "./assets/FNAF.pt", verbose = False, force_reload = True, _verbose = False)
     model.conf = 0.7
     print("\nAI Model loaded successfully")
     yoloActions = functions.InputActions(model)
