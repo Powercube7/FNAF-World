@@ -27,7 +27,7 @@ def checkFirstTimeUse():
                 exit()
             else:
                 '''
-                1. Split the location into a list with the \\ as a delimiter
+                1. Split the location into a list with the backslash character as a delimiter
                 2. If an element has multiple words, surround it with quotation marks
                 3. Join the list back together with a backslash
                 '''
@@ -174,13 +174,13 @@ class Modules:
             press(key, random.uniform(0, 1.5))
             previous = key
 
-        # If the program doesn't know the status, press the reverse key to go back to the previous state
+        # If the program doesn't know the status, press the reverse key in an attempt to return to a known state
         elif status == 'Clueless' and previous != None:
             press(controls[(controls.index(previous) + 2)%len(controls)], 0.5)
         elif status == 'Clueless' and previous == None:
             press(random.choice(controls), 0.5)
                 
-        # If the user enters a shop, click the DONE button
+        # If the user enters a shop, click the Done button
         elif status == 'Shopping':
             location = parameters["name"].index("Done Button")
             if location != -1:

@@ -1,10 +1,13 @@
-from tabnanny import verbose
-import pyautogui
-import os
-from PIL.ImageGrab import grab as grabScreenshot
-import functions
-import keyboard
-import torch
+try:
+    import pyautogui
+    import os
+    from PIL.ImageGrab import grab as grabScreenshot
+    import functions
+    import keyboard
+    import torch
+except ModuleNotFoundError:
+    import os
+    os.system("pip install -r requirements.txt")
 
 previousKey = None
 previousStatus = None
@@ -37,18 +40,22 @@ modules = functions.Modules
 
 # Load AI Model
 if fight or roam:
-    print("Loading AI model...")
-    model = torch.hub.load("ultralytics/yolov5", "custom", "./assets/FNAF.pt", verbose = False, force_reload = True, _verbose = False)
+    try:
+        print("Trying to load AI model from cache...")
+        model = torch.hub.load("ultralytics/yolov5", "custom", "./assets/FNAF.pt", verbose = False, _verbose = False)
+    except TypeError:
+        print("Error occured. Force reloading cache...")
+        model = torch.hub.load("ultralytics/yolov5", "custom", "./assets/FNAF.pt", verbose = False, force_reload = True, _verbose = False)
     model.conf = 0.7
     print("\nAI Model loaded successfully")
     yoloActions = functions.InputActions(model)
 else:
-    print("\nNo modules enabled. Exiting program.")
-    raise SystemExit("No modules enabled. Program execution stopped.")
+    pyautogui.alert("No modules enabled. Exiting program.", title="No modules enabled")
+    exit()
 
 print(f"Automatic Fighting Engaged: {fight}")
 print(f"Automatic Roaming Engaged: {roam}")
-while not keyboard.is_pressed('q'):
+while not keyboard.is_pressed('q') and functions.isGameOpened():
 
     # Take a screenshot of the game and get the status using the AI's detections
     frame = grabScreenshot()
@@ -61,6 +68,13 @@ while not keyboard.is_pressed('q'):
             switchButton = functions.getCenter(parameters["name"].index("Switch Button"), parameters)
             pyautogui.moveTo(switchButton)
             pyautogui.click()
+
+    # If C is being held, check if the player is in the overworld and click the chips button if that's the case
+    elif keyboard.is_pressed('c') and currentStatus == "Overworld":
+        chipsButton = pyautogui.center((305, 994, 270, 63))
+        pyautogui.moveTo(chipsButton)
+        pyautogui.click()
+
     else:
         # Run actions based on the enabled modules
         if fight:

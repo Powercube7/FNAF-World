@@ -12,6 +12,11 @@ It has 3 states:
 
 2) AutoFight: This module picks a random fighting option when they show up
 
+# Additional Controls
+- Press Q or close the game to quit the program
+- Press E to attempt to switch teams (only works in battle)
+- Press C to attempt to open the chips menu (only works in the overworld)
+
 # Installation instructions
 - Install the required dependencies (pip install -r requirements.txt)
 - Use the Run Autopilot.bat file to use the program
