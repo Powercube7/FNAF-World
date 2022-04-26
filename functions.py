@@ -175,10 +175,14 @@ class Modules:
             previous = key
 
         # If the program doesn't know the status, press the reverse key in an attempt to return to a known state
-        elif status == 'Clueless' and previous != None:
-            press(controls[(controls.index(previous) + 2)%len(controls)], 0.5)
-        elif status == 'Clueless' and previous == None:
-            press(random.choice(controls), 0.5)
+        elif status == 'Clueless':
+            # Keep pressing the previous key until the AI has returned to the overworld
+            if previous != None:
+                press(controls[(controls.index(previous) + 2)%len(controls)], 0.5)
+
+            # If there isn't a previous key, press a random key
+            else:
+                press(random.choice(controls), 0.5)
                 
         # If the user enters a shop, click the Done button
         elif status == 'Shopping':

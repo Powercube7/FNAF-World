@@ -1,13 +1,41 @@
 try:
     import pyautogui
     import os
+    import random
     from PIL.ImageGrab import grab as grabScreenshot
     import functions
+    import logging, sys
     import keyboard
+    import time
     import torch
 except ModuleNotFoundError:
     import os
+    import random
+    import logging, sys
     os.system("pip install -r requirements.txt")
+    import pyautogui
+    import functions
+    import keyboard
+    import time
+    import torch
+
+logFile = open("log.txt", "w+")
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(stream=logFile)
+logger.addHandler(handler)
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    pyautogui.alert(text="An error occurred.\nTraceback details saved to log.txt\nPlease report this error to the developer.", title="Error")
+    logger.error(msg="An unexpected error occured!", exc_info=(exc_type, exc_value, exc_traceback))
+
+sys.excepthook = handle_exception
+
+def clickWarp(number):
+    pyautogui.click(1817, 30 + (number * 110))
 
 previousKey = None
 previousStatus = None
@@ -55,7 +83,9 @@ else:
 
 print(f"Automatic Fighting Engaged: {fight}")
 print(f"Automatic Roaming Engaged: {roam}")
-while not keyboard.is_pressed('q') and functions.isGameOpened():
+
+start = time.time()
+while not keyboard.is_pressed('q'):
 
     # Take a screenshot of the game and get the status using the AI's detections
     frame = grabScreenshot()
@@ -80,6 +110,16 @@ while not keyboard.is_pressed('q') and functions.isGameOpened():
         if fight:
             modules.AutoFight(parameters, currentStatus)
         if roam:
+            # If the current status is different from Clueless, restart the timer
+            if currentStatus != "Clueless": 
+                start = time.time()
+
+            # If the time is greater than 15 seconds, warp to a random location
+            if time.time() - start > 15:
+                location = random.randint(1, 6)
+                clickWarp(location)
+                start = time.time()
+                
             previousKey = modules.AutoRoam(currentStatus, previousKey, parameters)
 
         # Increment the total victories if the user won
