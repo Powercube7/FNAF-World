@@ -5,3 +5,4 @@ Pillow>=9.1.0
 torch>=1.7.0
 torchvision>=0.8.1
 opencv-python>=4.5.5.64
+pywin32>=302
