@@ -1,76 +1,98 @@
-import psutil
-import pyautogui
+import json
 import time
+import pyautogui
+import win32process
+import psutil
 import random
 import cv2
 import os
 
-def checkFirstTimeUse():
-    if not os.path.exists("user.data"):
-        pyautogui.alert(title="Alert", text="User data for first time use not found.\nPlease complete the following prompt to use this program")
-        exe_name = pyautogui.prompt(title="Setup", text='Please insert the name of the game exe file (without the .exe extension)')
-        
-        if exe_name == None:
-            pyautogui.alert(title="Alert", text="Setup aborted")
-            exit()
+def check_user_data():
+    """
+    Checks if the user data file exists and if it contains a valid executable path to the FNaF World executable.
+    If the user data file is not found or is invalid, prompts the user to start the game to create a new user data file.
 
-        else:
-            def find(name, path):
-                for root, dirs, files in os.walk(path):
-                    if name in files:
-                        return os.path.join(root, name)
-            print("Searching the C: drive for the game exe file...")
-            location =  find(exe_name + ".exe", "C:\\")
-            if location == None:
-                print("Game exe file not found.")
-                pyautogui.alert(title="Alert", text="Game not found. Please restart the program and try again")
-                exit()
-            else:
-                '''
-                1. Split the location into a list with the backslash character as a delimiter
-                2. If an element has multiple words, surround it with quotation marks
-                3. Join the list back together with a backslash
-                '''
-                print("Game exe file found.")
-                location = location.split("\\")
-                for i in range(len(location)):
-                    if " " in location[i]:
-                        location[i] = '"' + location[i] + '"'
-                location = "\\".join(location)
+    Raises:
+        FileNotFoundError: If the user data file is not found.
+        ValueError: If the user data file contains an invalid executable path.
+    """
+    try:
+        assert os.path.isfile("user.json")
+        with open("user.json", "r") as f:
+            data = json.load(f)
+            exePath = data.get("exePath")
+            if not os.path.isfile(exePath) or exePath is None:
+                raise ValueError
 
-                f = open("user.data", "w+")
-                f.write(f"exePath={location}\nexeName={exe_name}.exe")
-        return False
-    else:
-        return True
+    except (AssertionError, FileNotFoundError):
+        pyautogui.alert(
+            title="Alert", text="No user data file found.\nPlease start the game to use this program")
+        get_game_path()
+    
+    except ValueError:
+        pyautogui.alert(
+            title="Alert", text="The user data file is invalid.\nPlease start the game to use this program")
+        get_game_path()
 
-def getCenter(index, parameters):
-            x1, x2 = parameters["xmin"][index], parameters["xmax"][index]
-            y1, y2 = parameters["ymin"][index], parameters["ymax"][index]
 
-            center = (int((x2 + x1) / 2), int((y2 + y1) / 2))
-            return center
+def get_game_path():
+    """
+    Finds the path to the FNaF World executable and saves it to a user data file.
+
+    Raises:
+        Exception: If the executable path is not found.
+    """
+    hwnd = []
+
+    # Loop until the FNaF World window is found
+    while hwnd == []:
+        hwnd = pyautogui.getWindowsWithTitle("FNaF World")
+        if len(hwnd) > 0:
+            hwnd = win32process.GetWindowThreadProcessId(hwnd[0]._hWnd)[1]
+            exePath = None
+
+    # Get the process ID of the FNaF World window and find the executable path
+    for process in psutil.process_iter():
+        try:
+            if process.pid == hwnd:
+                exePath = process.exe()
+                break
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
+            exePath = None
+
+    # Raise an exception if the executable path is not found
+    if exePath is None:
+        raise Exception("Could not find FNaF World process")
+
+    # Get the name of the executable and save the path and name to a user data file
+    exeName = os.path.basename(exePath)
+    data = {"exePath": exePath, "exeName": exeName}
+    with open("user.json", "w") as f:
+        json.dump(data, f)
+
 
 def isGameOpened():
     # Get list of current processes using psutil
     processes = [process.name() for process in psutil.process_iter()]
 
     # Get the name of the game from the user data file
-    f = open("user.data", "r")
-    gameName = f.read()
-    gameName = gameName.split("\n")[1]
-    gameName = gameName.replace("exeName=", "")
-    f.close()
+    with open("user.json", "r") as f:
+        data = json.load(f)
+        gameName = data.get("exeName")
 
     # Check if the game is opened
     if gameName in processes:
         return True
     else:
         return False
+
+
 def enableModules():
     # Ask the user if they want to enable the fighting module and the roaming module
-    enableFighting = pyautogui.confirm(title="Enable Module", text="Do you want to enable the fighting module?", buttons=["Yes", "No"])
-    enableRoaming = pyautogui.confirm(title="Enable Module", text="Do you want to enable the roaming module?\nWARNING: Having a text prompt open while the module is running will cause the inputs to be sent to the prompt.", buttons=["Yes", "No"])
+    enableFighting = pyautogui.confirm(
+        title="Enable Module", text="Do you want to enable the fighting module?", buttons=["Yes", "No"])
+    enableRoaming = pyautogui.confirm(
+        title="Enable Module", text="Do you want to enable the roaming module?\nWARNING: Having a text prompt open while the module is running will cause the inputs to be sent to the prompt.", buttons=["Yes", "No"])
 
     fight = False
     roam = False
@@ -83,11 +105,12 @@ def enableModules():
 
     return fight, roam
 
+
 class InputActions:
     def __init__(self, model):
         self.model = model
-    
-    def runInference(self, img, isBGR = False, returnParams = False):
+
+    def runInference(self, img, isBGR=False, returnParams=False):
         inferenceResults = None
 
         # Make sure the image is in BGR format for better results
@@ -100,23 +123,22 @@ class InputActions:
         # Return the detection details if prompted by the user
         if returnParams:
             parameters = {
-                "ymax": list(inferenceResults.pandas().xyxy[0].ymax),
-                "ymin": list(inferenceResults.pandas().xyxy[0].ymin),
+                "center": [(int((box[2] + box[0]) / 2), int((box[3] + box[1]) / 2)) for box in inferenceResults.xyxy[0]],
                 "conf": list(inferenceResults.pandas().xyxy[0].confidence),
-                "xmax": list(inferenceResults.pandas().xyxy[0].xmax),
-                "xmin": list(inferenceResults.pandas().xyxy[0].xmin),
                 "name": list(inferenceResults.pandas().xyxy[0].name)
             }
             return inferenceResults, parameters
-        
+
         else:
             return inferenceResults
-            
-    def getCurrentStatus(self, parametersDict, addText = []):
+
+    def getCurrentStatus(self, parametersDict, addText=[]):
         status = None
 
-        statusOptions = ['Overworld', 'Encountered Challenger', 'Battle End Screen', 'In Battle', 'Shopping']
-        labels = ['Overworld', 'New Challenger', 'Victory', 'Health', 'Lolbit Shop']
+        statusOptions = ['Overworld', 'Encountered Challenger',
+                         'Battle End Screen', 'In Battle', 'Shopping']
+        labels = ['Overworld', 'New Challenger',
+                  'Victory', 'Health', 'Lolbit Shop']
 
         # If nothing is found set the status to "Clueless"
         if parametersDict["name"] == []:
@@ -138,14 +160,19 @@ class InputActions:
         # Add the status on an image if the user supplies one
         if len(addText) != 0:
             if status == 'Overworld' or status == 'Clueless':
-                cv2.putText(addText, f"Status: {status}", (35, 240), cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
+                cv2.putText(addText, f"Status: {status}", (35, 240),
+                            cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
             elif status == 'Picking Option':
-                cv2.putText(addText, f"Status: {status}", (20, 140), cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 255, 0), 3)
+                cv2.putText(addText, f"Status: {status}", (20, 140),
+                            cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 255, 0), 3)
             elif status == 'Battle End Screen':
-                cv2.putText(addText, f"Status: {status}", (20, 90), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 0, 0), 3)
+                cv2.putText(
+                    addText, f"Status: {status}", (20, 90), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 0, 0), 3)
             else:
-                cv2.putText(addText, f"Status: {status}", (20, 140), cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
+                cv2.putText(addText, f"Status: {status}", (20, 140),
+                            cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
         return status
+
 
 class Modules:
 
@@ -156,13 +183,13 @@ class Modules:
                 if parameters["name"][i] == 'Fighting Option':
                     indexes.append(i)
             optionPicked = random.choice(indexes)
-            pyautogui.click(getCenter(optionPicked, parameters))
+            pyautogui.click(parameters["center"][optionPicked])
 
     def AutoRoam(status, previous, parameters):
         controls = ['w', 'a', 's', 'd']
 
         # Add function to avoid repeating code blocks
-        def press(key, delay = None):
+        def press(key, delay=None):
             pyautogui.keyDown(key)
             if delay != None:
                 time.sleep(delay)
@@ -178,16 +205,17 @@ class Modules:
         elif status == 'Clueless':
             # Keep pressing the previous key until the AI has returned to the overworld
             if previous != None:
-                press(controls[(controls.index(previous) + 2)%len(controls)], 0.5)
+                press(controls[(controls.index(previous) + 2) %
+                      len(controls)], 0.5)
 
             # If there isn't a previous key, press a random key
             else:
                 press(random.choice(controls), 0.5)
-                
+
         # If the user enters a shop, click the Done button
         elif status == 'Shopping':
             location = parameters["name"].index("Done Button")
             if location != -1:
-                pyautogui.click(getCenter(location, parameters))
+                pyautogui.click(parameters["center"][location])
 
         return previous

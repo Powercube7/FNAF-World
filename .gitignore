@@ -1,11 +1,4 @@
-videos
-tests.py
-extract.py
-training_functions.py
 __pycache__
-FNAF
-predict.py
-user.data
-classes.txt
-FNAF.zip
+user.json
 log.txt
+.vscode
