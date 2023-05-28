@@ -1,33 +1,22 @@
 try:
     import pyautogui
-    import os
-    import random
+    import os, sys, logging
+    import random, time
     from PIL.ImageGrab import grab as grabScreenshot
+    import torch, keyboard
     import functions
-    import logging
-    import sys
     import json
-    import keyboard
-    import time
-    import torch
 except ModuleNotFoundError:
     import os
-    import random
-    import logging
-    import sys
-    import json
     os.system("pip install -r requirements.txt")
     import pyautogui
-    import functions
-    import keyboard
-    import time
-    import torch
+    pyautogui.alert("The required dependencies have been installed.\nPlease restart the program.", title="Modules Installed")
+    exit()
 
 logFile = open("log.txt", "w+")
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(stream=logFile)
 logger.addHandler(handler)
-
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -39,13 +28,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logger.error(msg="An unexpected error occured!",
                  exc_info=(exc_type, exc_value, exc_traceback))
 
-
 sys.excepthook = handle_exception
-
-
-def clickWarp(number):
-    pyautogui.click(1817, 30 + (number * 110))
-
 
 previousKey = None
 previousStatus = None
@@ -55,17 +38,9 @@ challengers = 0
 functions.check_user_data()
 print("User data found. Starting program...")
 if not functions.isGameOpened():
-
-    # Read the exePath from the user data file and save it in the variable "gamePath"
-    with open("user.json", "r") as f:
-        data = json.load(f)
-    gamePath = data.get("exePath")
-
-    try:
-        os.startfile(gamePath)
-        print("Game opened successfully. Starting modules.")
-    except:
-        print("Game could not be opened. Please make sure the game is installed and the path is correct.\nIf the path isn't correct, delete user.data and restart the program.")
+    gamePath = json.load(open("user.json", "r")).get("exePath")
+    os.startfile(gamePath)
+    print("Game opened successfully. Starting modules.")
 else:
     print("Game already open. Starting modules.")
 
@@ -99,7 +74,7 @@ while not keyboard.is_pressed('q'):
 
     # Take a screenshot of the game and get the status using the AI's detections
     frame = grabScreenshot()
-    resultImage, parameters = yoloActions.runInference(frame, True, True)
+    resultImage, parameters = yoloActions.runInference(frame, True)
     currentStatus = yoloActions.getCurrentStatus(parameters)
 
     # If E is being held, check if switch button and health is visible (prevents clicks during team selection)
@@ -127,8 +102,7 @@ while not keyboard.is_pressed('q'):
 
             # If the time is greater than 15 seconds, warp to a random location
             if time.time() - start > 15:
-                location = random.randint(1, 6)
-                clickWarp(location)
+                functions.clickWarp(random.randint(1, 6))
                 start = time.time()
 
             previousKey = modules.AutoRoam(
@@ -143,5 +117,6 @@ while not keyboard.is_pressed('q'):
             challengers += 1
 
     previousStatus = currentStatus
+
 pyautogui.alert(title="Program ended",
                 text=f"Total battles won: {victories}\nTotal challengers encountered: {challengers}")

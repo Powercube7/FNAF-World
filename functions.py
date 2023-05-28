@@ -17,6 +17,7 @@ def check_user_data():
         ValueError: If the user data file contains an invalid executable path.
     """
     try:
+        # Check if the user data file exists and if it contains a valid executable path
         assert os.path.isfile("user.json")
         with open("user.json", "r") as f:
             data = json.load(f)
@@ -25,11 +26,13 @@ def check_user_data():
                 raise ValueError
 
     except (AssertionError, FileNotFoundError):
+        # If the user data file is not found, prompt the user to start the game to create a new user data file
         pyautogui.alert(
             title="Alert", text="No user data file found.\nPlease start the game to use this program")
         get_game_path()
     
     except ValueError:
+        # If the user data file is invalid, prompt the user to start the game to create a new user data file
         pyautogui.alert(
             title="Alert", text="The user data file is invalid.\nPlease start the game to use this program")
         get_game_path()
@@ -80,11 +83,10 @@ def isGameOpened():
         data = json.load(f)
         gameName = data.get("exeName")
 
-    # Check if the game is opened
-    if gameName in processes:
-        return True
-    else:
-        return False
+    return gameName in processes
+
+def clickWarp(number):
+    pyautogui.click(1817, 30 + (number * 110))
 
 
 def enableModules():
@@ -110,15 +112,10 @@ class InputActions:
     def __init__(self, model):
         self.model = model
 
-    def runInference(self, img, isBGR=False, returnParams=False):
-        inferenceResults = None
+    def runInference(self, img, returnParams=False):
 
-        # Make sure the image is in BGR format for better results
-        if not isBGR:
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            inferenceResults = self.model(img)
-        else:
-            inferenceResults = self.model(img)
+        # Run the image through the model
+        inferenceResults = self.model(img)
 
         # Return the detection details if prompted by the user
         if returnParams:
@@ -132,47 +129,36 @@ class InputActions:
         else:
             return inferenceResults
 
-    def getCurrentStatus(self, parametersDict, addText=[]):
-        status = None
+    def getCurrentStatus(self, parametersDict):
+        """
+        Determines the current status of the game based on the given parameters dictionary.
 
-        statusOptions = ['Overworld', 'Encountered Challenger',
-                         'Battle End Screen', 'In Battle', 'Shopping']
-        labels = ['Overworld', 'New Challenger',
-                  'Victory', 'Health', 'Lolbit Shop']
+        Parameters:
+        parametersDict (dict): A dictionary containing the detection details of the current game screen.
 
-        # If nothing is found set the status to "Clueless"
-        if parametersDict["name"] == []:
-            status = "Clueless"
-        # Set the status to Picking Option only if the AI finds both the health of the characters and the fighting option in order to avoid fake positives
-        elif "Health" in parametersDict["name"] and "Fighting Option" in parametersDict["name"]:
-            status = "Picking Option"
+        Returns:
+        str: A string representing the current status of the game.
+        """
+        statusOptions = {
+            'Overworld': 'Overworld',
+            'New Challenger': 'Encountered Challenger',
+            'Victory': 'Battle End Screen',
+            'Health': 'In Battle',
+            'Lolbit Shop': 'Shopping'
+        }
+
+        # Check if both health and fighting options are found
+        if all(option in parametersDict["name"] for option in ["Health", "Fighting Option"]):
+            return "Picking Option"
+
         else:
             # Iterate through the rest of the labels and check if any of them are in the name list. If so, set the status to the option corresponding to that label
-            for i in range(0, len(labels)):
-                if labels[i] in parametersDict["name"]:
-                    status = statusOptions[i]
-                    break
+            for label, option in statusOptions.items():
+                if label in parametersDict["name"]:
+                    return option
 
         # Set status to Clueless if it's None to avoid errors
-        if status == None:
-            status = "Clueless"
-
-        # Add the status on an image if the user supplies one
-        if len(addText) != 0:
-            if status == 'Overworld' or status == 'Clueless':
-                cv2.putText(addText, f"Status: {status}", (35, 240),
-                            cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
-            elif status == 'Picking Option':
-                cv2.putText(addText, f"Status: {status}", (20, 140),
-                            cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 255, 0), 3)
-            elif status == 'Battle End Screen':
-                cv2.putText(
-                    addText, f"Status: {status}", (20, 90), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 0, 0), 3)
-            else:
-                cv2.putText(addText, f"Status: {status}", (20, 140),
-                            cv2.FONT_HERSHEY_COMPLEX, 1.5, (0, 0, 255), 3)
-        return status
-
+        return "Clueless"
 
 class Modules:
 
