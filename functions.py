@@ -4,8 +4,8 @@ import pyautogui
 import win32process
 import psutil
 import random
-import cv2
 import os
+
 
 def check_user_data():
     """
@@ -30,7 +30,7 @@ def check_user_data():
         pyautogui.alert(
             title="Alert", text="No user data file found.\nPlease start the game to use this program")
         get_game_path()
-    
+
     except ValueError:
         # If the user data file is invalid, prompt the user to start the game to create a new user data file
         pyautogui.alert(
@@ -85,34 +85,30 @@ def isGameOpened():
 
     return gameName in processes
 
-def clickWarp(number):
-    pyautogui.click(1817, 30 + (number * 110))
 
+class InferenceActions:
 
-def enableModules():
-    # Ask the user if they want to enable the fighting module and the roaming module
-    enableFighting = pyautogui.confirm(
-        title="Enable Module", text="Do you want to enable the fighting module?", buttons=["Yes", "No"])
-    enableRoaming = pyautogui.confirm(
-        title="Enable Module", text="Do you want to enable the roaming module?\nWARNING: Having a text prompt open while the module is running will cause the inputs to be sent to the prompt.", buttons=["Yes", "No"])
-
-    fight = False
-    roam = False
-
-    # Enable modules if prompted by the user
-    if enableFighting == "Yes":
-        fight = True
-    if enableRoaming == "Yes":
-        roam = True
-
-    return fight, roam
-
-
-class InputActions:
     def __init__(self, model):
+        """
+        Initializes the Inference class with a given model.
+
+        Parameters:
+            model (detectron2.engine.defaults.DefaultPredictor): The model to use for inference.
+        """
         self.model = model
 
     def runInference(self, img, returnParams=False):
+        """
+        Runs the given image through the model and returns the detection results.
+
+        Parameters:
+            img (PIL.Image): The image to run through the model.
+            returnParams (bool): Whether or not to return the detection details.
+
+        Returns:
+            Detectron2.utils.visualizer.GenericMask: The detection results.
+            dict: A dictionary containing the detection details (if returnParams is True).
+        """
 
         # Run the image through the model
         inferenceResults = self.model(img)
@@ -147,61 +143,100 @@ class InputActions:
             'Lolbit Shop': 'Shopping'
         }
 
-        # Check if both health and fighting options are found
-        if all(option in parametersDict["name"] for option in ["Health", "Fighting Option"]):
-            return "Picking Option"
+        return "Picking Option" if all(option in parametersDict["name"] for option in ["Health", "Fighting Option"]) else next((option for label, option in statusOptions.items() if label in parametersDict["name"]), "Clueless")
 
-        else:
-            # Iterate through the rest of the labels and check if any of them are in the name list. If so, set the status to the option corresponding to that label
-            for label, option in statusOptions.items():
-                if label in parametersDict["name"]:
-                    return option
-
-        # Set status to Clueless if it's None to avoid errors
-        return "Clueless"
 
 class Modules:
 
-    def AutoFight(parameters, status):
-        if status == 'Picking Option':
-            indexes = []
-            for i in range(0, len(parameters["name"])):
-                if parameters["name"][i] == 'Fighting Option':
-                    indexes.append(i)
-            optionPicked = random.choice(indexes)
-            pyautogui.click(parameters["center"][optionPicked])
+    def __init__(self) -> None:
+        self.previous_key = None
+        self.last_seen = None
+        self.activated = {
+            'AutoRoam': False,
+            'AutoFight': False
+        }
 
-    def AutoRoam(status, previous, parameters):
+    def promptModules(self):
+        """
+        Prompts the user to enable or disable the AutoFight and AutoRoam modules.
+
+        Returns:
+        None
+        """
+        self.activated['AutoFight'] = pyautogui.confirm(
+            title="Enable Module", text="Do you want to enable the fighting module?", buttons=["Yes", "No"]) == "Yes"
+        self.activated['AutoRoam'] = pyautogui.confirm(
+            title="Enable Module", text="Do you want to enable the roaming module?\nWARNING: Having a text prompt open while the module is running will cause the inputs to be sent to the prompt.", buttons=["Yes", "No"]) == "Yes"
+        
+    def runModules(self, parameters, status):
+        """
+        Runs the AutoFight and AutoRoam modules if they are enabled.
+
+        Parameters:
+            parameters (dict): A dictionary containing the detection details of the current game screen.
+            status (str): A string representing the current status of the game.
+
+        Returns:
+            None
+        """
+        if self.activated['AutoFight']:
+            self.AutoFight(parameters, status)
+        if self.activated['AutoRoam']:
+            self.AutoRoam(parameters, status)
+
+    def clickWarp(self, number):
+        pyautogui.click(1817, 30 + (number * 110))
+
+    def AutoFight(self, parameters, status):
+        """
+        Picks a fighting option at random from the available options on the screen.
+
+        Parameters:
+            parameters (dict): A dictionary containing the detection details of the current game screen.
+            status (str): A string representing the current status of the game.
+
+        Returns:
+            None
+        """
+        if status == 'Picking Option':
+            indexes = [i for i, name in enumerate(parameters["name"]) if name == 'Fighting Option']
+            option_picked = random.choice(indexes)
+            pyautogui.click(parameters["center"][option_picked])
+
+    def AutoRoam(self, parameters, status):
+        """
+        Moves the player character randomly in the overworld or attempts to return to a known state if the program doesn't know the current status.
+
+        Parameters:
+            parameters (dict): A dictionary containing the detection details of the current game screen.
+            status (str): A string representing the current status of the game.
+
+        Returns:
+            None
+        """
         controls = ['w', 'a', 's', 'd']
+        if self.last_seen is not None and time.time() - self.last_seen > 30:
+            self.clickWarp(random.randint(1, 6))
+        else:
+            self.last_seen = time.time()
 
         # Add function to avoid repeating code blocks
-        def press(key, delay=None):
+        def press(key, delay = None):
             pyautogui.keyDown(key)
             if delay != None:
                 time.sleep(delay)
             pyautogui.keyUp(key)
 
-        # If the user is in the overworld, update the key value with one of the WASD keys randomly to move around for a random duration of maximum 1.5 seconds
+        # If the user is in the overworld, move in a random direction and save the key pressed
         if status == 'Overworld':
             key = random.choice(controls)
             press(key, random.uniform(0, 1.5))
-            previous = key
+            self.previous_key = key
 
-        # If the program doesn't know the status, press the reverse key in an attempt to return to a known state
         elif status == 'Clueless':
-            # Keep pressing the previous key until the AI has returned to the overworld
-            if previous != None:
-                press(controls[(controls.index(previous) + 2) %
-                      len(controls)], 0.5)
+            # Keep pressing the previous key until the AI has returned to the overworld, or press a random key if there isn't a previous key
+            press(controls[(controls.index(self.previous_key) + 2) % len(controls)] if self.previous_key != None else random.choice(controls), 0.5)
 
-            # If there isn't a previous key, press a random key
-            else:
-                press(random.choice(controls), 0.5)
-
-        # If the user enters a shop, click the Done button
-        elif status == 'Shopping':
-            location = parameters["name"].index("Done Button")
-            if location != -1:
-                pyautogui.click(parameters["center"][location])
-
-        return previous
+        # If the user enters a shop, click the Done button to exit
+        elif status == 'Shopping' and 'Done Button' in parameters['name']:
+            pyautogui.click(parameters['center'][parameters['name'].index('Done Button')])

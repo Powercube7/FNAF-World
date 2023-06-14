@@ -1,7 +1,7 @@
 try:
     import pyautogui
     import os, sys, logging
-    import random, time
+    import time
     from PIL.ImageGrab import grab as grabScreenshot
     import torch, keyboard
     import functions
@@ -45,11 +45,11 @@ else:
     print("Game already open. Starting modules.")
 
 # Load the modules
-fight, roam = functions.enableModules()
-modules = functions.Modules
+modules = functions.Modules()
+modules.promptModules()
 
 # Load AI Model
-if fight or roam:
+if True in modules.activated.values():
     try:
         print("Trying to load AI model from cache...")
         model = torch.hub.load("ultralytics/yolov5", "custom",
@@ -60,14 +60,14 @@ if fight or roam:
                                verbose=False, force_reload=True, _verbose=False)
     model.conf = 0.7
     print("\nAI Model loaded successfully")
-    yoloActions = functions.InputActions(model)
+    yoloActions = functions.InferenceActions(model)
 else:
     pyautogui.alert("No modules enabled. Exiting program.",
                     title="No modules enabled")
     exit()
 
-print(f"Automatic Fighting Engaged: {fight}")
-print(f"Automatic Roaming Engaged: {roam}")
+print(f"Automatic Fighting Engaged: {modules.activated['AutoFight']}")
+print(f"Automatic Roaming Engaged: {modules.activated['AutoRoam']}")
 
 start = time.time()
 while not keyboard.is_pressed('q'):
@@ -80,8 +80,7 @@ while not keyboard.is_pressed('q'):
     # If E is being held, check if switch button and health is visible (prevents clicks during team selection)
     if keyboard.is_pressed('e'):
         if "Switch Button" in parameters["name"] and "Health" in parameters["name"]:
-            switchButton = parameters["center"][parameters["name"].index(
-                "Switch Button")]
+            switchButton = parameters["center"][parameters["name"].index("Switch Button")]
             pyautogui.moveTo(switchButton)
             pyautogui.click()
 
@@ -93,20 +92,7 @@ while not keyboard.is_pressed('q'):
 
     else:
         # Run actions based on the enabled modules
-        if fight:
-            modules.AutoFight(parameters, currentStatus)
-        if roam:
-            # If the current status is different from Clueless, restart the timer
-            if currentStatus != "Clueless":
-                start = time.time()
-
-            # If the time is greater than 15 seconds, warp to a random location
-            if time.time() - start > 15:
-                functions.clickWarp(random.randint(1, 6))
-                start = time.time()
-
-            previousKey = modules.AutoRoam(
-                currentStatus, previousKey, parameters)
+        modules.runModules(parameters, currentStatus)
 
         # Increment the total victories if the user won
         if currentStatus == 'Battle End Screen' and previousStatus != currentStatus:
